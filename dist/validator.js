@@ -4,6 +4,43 @@
   (global.Validator = factory());
 }(this, (function () { 'use strict';
 
+  /**
+   * 类似于 Object.assign
+   * 但对于 target 中原有的 object 类型的属性值不会覆盖, 而是合并
+   *
+   * @param {Object} target
+   * @param {Object} source
+   */
+
+  function merge(target, source) {
+    for (let key in source) {
+      if (!target[key] || typeof target[key] !== 'object') {
+        target[key] = source[key];
+      } else {
+        merge(target[key], source[key]);
+      }
+    }
+  }
+
+  /**
+   * 返回一个函数
+   * 调用这个函数就是用 merge 来修改 baseObj 的值
+   *
+   * @param {Object} baseObj
+   * @return {Function}
+   */
+
+  function createAddAPI(baseObj) {
+    return function add(...args) {
+      if (typeof args[0] === 'string') {
+        args[0] = {
+          [args[0]]: args[1]
+        };
+      }
+      merge(baseObj, args[0]);
+    }
+  }
+
   const types = {
     string(value) {
       return typeof value === 'string'
@@ -13,7 +50,7 @@
     }
   };
 
-  var RULE_MAP = {
+  const rules = {
     required(value, config, type) {
       // 用户指明 reuired = false
       if (config === false) {
@@ -29,7 +66,6 @@
       return types[type] && types[type](value)
     },
 
-    // 实际上我在这里按照类型判断了, 那也是不纯粹了
     min(value, config, type) {
       if (type === 'string') {
         return value.length > config
@@ -53,6 +89,9 @@
       return config(value)
     }
   };
+
+  const addType = createAddAPI(types);
+  const addRule = createAddAPI(rules);
 
   /**
    * 主要在于, messsage对应不同情况下的rule, 会有多条
@@ -91,6 +130,8 @@
 
     return 'unknown message'
   }
+
+  const addMessage = createAddAPI(messages);
 
   /*
   const loginRule = {
@@ -143,23 +184,22 @@
       const errors = [];
 
       for (let key in schema) {
-        const rules = format(schema[key]);
+        const rules$$1 = format(schema[key]);
         const value = data[key]
 
         // 一个字段对应的所有规则数组
         ;(function validateKey() {
-          for (let rule of rules) {
+          for (let rule of rules$$1) {
             const defMessage = rule.message;
             delete rule.message;
 
             for (let rulename in rule) {
-              let checker = RULE_MAP[rulename];
+              let checker = rules[rulename];
               if (!checker) {
                 throw new Error('对应的规则不存在于RULE_MAP中')
               }
-              checker = checker.bind(RULE_MAP);
+              checker = checker.bind(rules);
 
-              // const pass = checker(value, rule.type, rule[rulename])
               const pass = checker(value, rule[rulename], rule.type);
               if (!pass) {
                 // 遇到第一个错误就直接返回
@@ -167,6 +207,7 @@
                   defMessage || getMessage(rulename, rule.type, rule[rulename]);
                 errors.push({
                   key,
+                  value,
                   message,
                   rule: rulename
                 });
@@ -180,6 +221,39 @@
       if (errors.length) {
         return errors
       }
+    }
+
+    /**
+     * 修改 rules(RULE_MAP) 对象
+     * 和 custom 这条规则又有什么区别呢?
+     * 如果有要多次重复使用的自定义规则, 用 addRule 和下面的api定义
+     * 否则直接使用 custom 就好了
+     *
+     * @param {*} args
+     */
+
+    static addRule(...args) {
+      addRule(...args);
+    }
+
+    /**
+     * 修改 messages 对象
+     *
+     * @param {*} args
+     */
+
+    static addMessage(...args) {
+      addMessage(...args);
+    }
+
+    /**
+     * 修改 types 对象
+     *
+     * @param {*} args
+     */
+
+    static addType(...args) {
+      addType(...args);
     }
   }
 

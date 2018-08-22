@@ -1,4 +1,6 @@
-export const types = {
+import { createAddAPI } from './helper'
+
+const types = {
   string(value) {
     return typeof value === 'string'
   },
@@ -7,7 +9,7 @@ export const types = {
   }
 }
 
-export default {
+const rules = {
   required(value, config, type) {
     // 用户指明 reuired = false
     if (config === false) {
@@ -23,7 +25,6 @@ export default {
     return types[type] && types[type](value)
   },
 
-  // 实际上我在这里按照类型判断了, 那也是不纯粹了
   min(value, config, type) {
     if (type === 'string') {
       return value.length > config
@@ -46,4 +47,13 @@ export default {
   custom(value, config, type) {
     return config(value)
   }
+}
+
+const addType = createAddAPI(types)
+const addRule = createAddAPI(rules)
+
+export default rules
+export {
+  addType,
+  addRule
 }

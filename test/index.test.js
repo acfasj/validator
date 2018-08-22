@@ -1,22 +1,19 @@
 const assert = require('power-assert')
-const Validator = require('../dist/validator')
+const purgeCache = require('./purge-cache')
+let Validator
+let validator
 
-const validator = new Validator()
+/**
+ * 清除 node 对 Validator 的缓存
+ * 因为 addType, addRule, addMessage, 都会改变对应的对象
+ * https://mochajs.org/#root-level-hooks
+ */
 
-describe('validator', () => {
-  describe('method validate', () => {
-    it('rule not exist should return error', () => {
-      const schema = {
-        test: { RULE_NOT_EXIST: 'VALUE_NOT_EXIST', message: 'RULE_NOT_EXIST' }
-      }
-      const data = { test: 'value' }
-      try {
-        validator.validate(data, schema)
-      } catch (e) {
-        assert(e.toString() === 'Error: 对应的规则不存在于RULE_MAP中')
-      }
-    })
-  })
+beforeEach(() => {
+  // before every test in every file
+  purgeCache('../dist/validator')
+  Validator = require('../dist/validator')
+  validator = new Validator()
 })
 
 describe('all rules', () => {
@@ -125,6 +122,127 @@ describe('all rules', () => {
       assert(errors[0].key === 'test')
       assert(errors[0].rule === 'custom')
       assert(errors[0].message === 'BLIND_TOM')
+    })
+  })
+})
+
+describe('instance validator', () => {
+  describe('#validate()', () => {
+    it('should return error while rule not exist', () => {
+      const schema = {
+        test: { RULE_NOT_EXIST: 'VALUE_NOT_EXIST', message: 'RULE_NOT_EXIST' }
+      }
+      const data = { test: 'value' }
+      try {
+        validator.validate(data, schema)
+      } catch (e) {
+        assert(e.toString() === 'Error: 对应的规则不存在于RULE_MAP中')
+      }
+    })
+  })
+})
+
+describe('class Validator', () => {
+  describe('static #addRule()', () => {
+    it('should work with a new rule', () => {
+      Validator.addRule('myRule', (value, config, type) => {
+        return value === 'MY_RULE' && config === true
+      })
+      const schema = { test: { myRule: true } }
+      const data = { test: 'MY_RULE' }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+
+    it('should work with a new rule via object notation', () => {
+      Validator.addRule({
+        myRule: (value, config, type) => {
+          return value === 'MY_RULE' && config === true
+        }
+      })
+      const schema = { test: { myRule: true } }
+      const data = { test: 'MY_RULE' }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+
+    it('should override an exist rule', () => {
+      Validator.addRule('min', (value, config, type) => {
+        return value === 'MIN' && config === 'MIN'
+      })
+      const schema = { test: { min: 'MIN' } }
+      const data = { test: 'MIN' }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+  })
+
+  describe('static #addType()', () => {
+    it('should work with a new type', () => {
+      Validator.addType('myType', value => {
+        return value === 'MY_TYPE'
+      })
+      const schema = { test: { type: 'myType' } }
+      const data = { test: 'MY_TYPE' }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+
+    it('should work with a new type via object notation', () => {
+      Validator.addType({
+        myType(value) {
+          return value === 'MY_TYPE'
+        }
+      })
+      const schema = { test: { type: 'myType' } }
+      const data = { test: 'MY_TYPE' }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+
+    it('should override an exist type', () => {
+      Validator.addType('string', value => {
+        return value === 0
+      })
+      const schema = { test: { type: 'string' } }
+      const data = { test: 0 }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+  })
+
+  describe('static #addMessage()', () => {
+    it('should work with a new message', () => {
+      Validator.addRule('myRule', (value, config, type) => {
+        return value === 'MY_RULE'
+      })
+      Validator.addMessage('myRule', 'MY_MESSAGE')
+      const schema = { test: { myRule: true } }
+      const data = { test: 0 }
+      const errors = validator.validate(data, schema)
+      assert(errors.length === 1)
+      assert(errors[0].message === 'MY_MESSAGE')
+    })
+
+    it('should work with a new message via object notation', () => {
+      Validator.addRule('myRule', (value, config, type) => {
+        return value === 'MY_RULE'
+      })
+      Validator.addMessage({ 'myRule': 'MY_MESSAGE' })
+      const schema = { test: { myRule: true } }
+      const data = { test: 0 }
+      const errors = validator.validate(data, schema)
+      assert(errors.length === 1)
+      assert(errors[0].message === 'MY_MESSAGE')
+    })
+
+    it('should override an exist message', () => {
+      Validator.addMessage({ type: { string: 'string type required' } })
+      const schema = { test: { type: 'string' } }
+      const data = { test: 0 }
+      const errors = validator.validate(data, schema)
+      assert(errors.length === 1)
+      assert(errors[0].message === 'string type required')
     })
   })
 })

@@ -1,3 +1,5 @@
+import { createAddAPI } from './helper'
+
 /**
  * 主要在于, messsage对应不同情况下的rule, 会有多条
  */
@@ -19,7 +21,7 @@ const messages = {
   custom: '未通过校验'
 }
 
-export function getMessage(rulename, type, ...config) {
+function getMessage(rulename, type, ...config) {
   const target = messages[rulename]
   if (typeof target === 'string') {
     return target
@@ -34,4 +36,11 @@ export function getMessage(rulename, type, ...config) {
   }
 
   return 'unknown message'
+}
+
+const addMessage = createAddAPI(messages)
+
+export {
+  getMessage,
+  addMessage
 }
