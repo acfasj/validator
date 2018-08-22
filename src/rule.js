@@ -8,7 +8,7 @@ export const types = {
 }
 
 export default {
-  required(value, type, config) {
+  required(value, config, type) {
     // 用户指明 reuired = false
     if (config === false) {
       return true
@@ -19,12 +19,12 @@ export default {
     return Boolean(value) && value !== 0
   },
 
-  type(value, type) {
+  type(value, config, type) {
     return types[type] && types[type](value)
   },
 
   // 实际上我在这里按照类型判断了, 那也是不纯粹了
-  min(value, type, config) {
+  min(value, config, type) {
     if (type === 'string') {
       return value.length > config
     }
@@ -34,16 +34,16 @@ export default {
     }
   },
 
-  max(value, type, config) {
-    return !this.min(value, type, config)
+  max(value, config, type) {
+    return !this.min(value, config, type)
   },
 
-  match(value, type, config) {
+  match(value, config, type) {
     const reg = new RegExp(config)
     return reg.test(value)
   },
 
-  custom(value, type, config) {
+  custom(value, config, type) {
     return config(value)
   }
 }

@@ -1,5 +1,5 @@
 import RULE_MAP from './rule'
-import getMessage from './message'
+import { getMessage } from './message'
 
 /*
 const loginRule = {
@@ -68,7 +68,8 @@ export default class Validator {
             }
             checker = checker.bind(RULE_MAP)
 
-            const pass = checker(value, rule.type, rule[rulename])
+            // const pass = checker(value, rule.type, rule[rulename])
+            const pass = checker(value, rule[rulename], rule.type)
             if (!pass) {
               // 遇到第一个错误就直接返回
               const message =

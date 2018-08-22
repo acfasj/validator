@@ -19,7 +19,7 @@ const messages = {
   custom: '未通过校验'
 }
 
-export default function getMessage(rulename, type, ...config) {
+export function getMessage(rulename, type, ...config) {
   const target = messages[rulename]
   if (typeof target === 'string') {
     return target
