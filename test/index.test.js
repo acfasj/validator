@@ -102,9 +102,9 @@ describe('all rules', () => {
     })
   })
 
-  describe('match', () => {
+  describe('pattern', () => {
     it('should match pattern ok', () => {
-      const schema = { test: { match: /BLIND_TOM/i } }
+      const schema = { test: { pattern: /BLIND_TOM/i } }
       const data = { test: 'blind_tom' }
       const errors = validator.validate(data, schema)
       assert(errors === undefined)

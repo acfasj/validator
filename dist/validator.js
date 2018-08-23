@@ -45,6 +45,12 @@
     string(value) {
       return typeof value === 'string'
     },
+
+    /**
+     * 只要能转换成 number
+     *
+     * @param {String|Number} value
+     */
     number(value) {
       return !isNaN(Number(value))
     }
@@ -80,7 +86,7 @@
       return !this.min(value, config, type)
     },
 
-    match(value, config, type) {
+    pattern(value, config, type) {
       const reg = new RegExp(config);
       return reg.test(value)
     },
@@ -94,8 +100,14 @@
   const addRule = createAddAPI(rules);
 
   /**
-   * 主要在于, messsage对应不同情况下的rule, 会有多条
+   * rule 和 message 能否不因为 type 的缘故而再嵌套多一层 ?
+   * 都是扁平化的结构, 一条 rule 就对应一条message不行吗 ?
+   * 当然可以, 只是这样必定要多出很多条 rulename , 代码写起来是方便了, 但使用不方便
+   *
+   * 比如, min 只用来比较 number 数值的大小
+   * 如果要不再嵌套, 那么 min 就不能再用于限制 string 的最小长度, 要另起一个名字比如 minlength
    */
+
   const messages = {
     required: '必填',
     type: {
@@ -110,7 +122,7 @@
       string: config => `不能超过${config}个字符`,
       number: config => `不能大于${config}`
     },
-    match: '正则匹配不通过',
+    pattern: '正则匹配不通过',
     custom: '未通过校验'
   };
 
@@ -222,40 +234,28 @@
         return errors
       }
     }
-
-    /**
-     * 修改 rules(RULE_MAP) 对象
-     * 和 custom 这条规则又有什么区别呢?
-     * 如果有要多次重复使用的自定义规则, 用 addRule 和下面的api定义
-     * 否则直接使用 custom 就好了
-     *
-     * @param {*} args
-     */
-
-    static addRule(...args) {
-      addRule(...args);
-    }
-
-    /**
-     * 修改 messages 对象
-     *
-     * @param {*} args
-     */
-
-    static addMessage(...args) {
-      addMessage(...args);
-    }
-
-    /**
-     * 修改 types 对象
-     *
-     * @param {*} args
-     */
-
-    static addType(...args) {
-      addType(...args);
-    }
   }
+
+  /**
+   * 修改 rules(RULE_MAP) 对象
+   * 和 custom 这条规则又有什么区别呢?
+   * 如果有要多次重复使用的自定义规则, 用 addRule 和下面的api定义
+   * 否则直接使用 custom 就好了
+   */
+
+  Validator.addRule = addRule;
+
+  /**
+   * 修改 messages 对象
+   */
+
+  Validator.addMessage = addMessage;
+
+  /**
+   * 修改 types 对象
+   */
+
+  Validator.addType = addType;
 
   return Validator;
 

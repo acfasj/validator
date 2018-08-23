@@ -4,6 +4,12 @@ const types = {
   string(value) {
     return typeof value === 'string'
   },
+
+  /**
+   * 只要能转换成 number
+   *
+   * @param {String|Number} value
+   */
   number(value) {
     return !isNaN(Number(value))
   }
@@ -39,7 +45,7 @@ const rules = {
     return !this.min(value, config, type)
   },
 
-  match(value, config, type) {
+  pattern(value, config, type) {
     const reg = new RegExp(config)
     return reg.test(value)
   },

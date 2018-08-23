@@ -90,37 +90,25 @@ export default class Validator {
       return errors
     }
   }
-
-  /**
-   * 修改 rules(RULE_MAP) 对象
-   * 和 custom 这条规则又有什么区别呢?
-   * 如果有要多次重复使用的自定义规则, 用 addRule 和下面的api定义
-   * 否则直接使用 custom 就好了
-   *
-   * @param {*} args
-   */
-
-  static addRule(...args) {
-    addRule(...args)
-  }
-
-  /**
-   * 修改 messages 对象
-   *
-   * @param {*} args
-   */
-
-  static addMessage(...args) {
-    addMessage(...args)
-  }
-
-  /**
-   * 修改 types 对象
-   *
-   * @param {*} args
-   */
-
-  static addType(...args) {
-    addType(...args)
-  }
 }
+
+/**
+ * 修改 rules(RULE_MAP) 对象
+ * 和 custom 这条规则又有什么区别呢?
+ * 如果有要多次重复使用的自定义规则, 用 addRule 和下面的api定义
+ * 否则直接使用 custom 就好了
+ */
+
+Validator.addRule = addRule
+
+/**
+ * 修改 messages 对象
+ */
+
+Validator.addMessage = addMessage
+
+/**
+ * 修改 types 对象
+ */
+
+Validator.addType = addType
