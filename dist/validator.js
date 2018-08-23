@@ -203,9 +203,13 @@
         ;(function validateKey() {
           for (let rule of rules$$1) {
             const defMessage = rule.message;
-            delete rule.message;
 
             for (let rulename in rule) {
+              // 不能 delete rule.message, 多次验证
+              if (rulename === 'message') {
+                continue
+              }
+
               let checker = rules[rulename];
               if (!checker) {
                 throw new Error('对应的规则不存在于RULE_MAP中')

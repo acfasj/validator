@@ -6,27 +6,98 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
+  <style>
+    input,
+    select {
+      margin-left: 10px;
+    }
+  </style>
 </head>
 
 <body>
+  <div id="app">
+    <form @submit="checkForm" action="/something" method="post">
+
+      <p v-if="errors.length">
+        <b>Please correct the following error(s):</b>
+        <ul>
+          <li v-for="error in errors">{{ error }}</li>
+        </ul>
+      </p>
+
+      <p>
+        <label for="name">Name
+          <label>
+            <input type="text" name="name" id="name" v-model="form.name">
+      </p>
+
+      <p>
+        <label for="age">Age
+          <label>
+            <input type="number" name="age" id="age" v-model="form.age" min="0">
+      </p>
+
+      <p>
+        <label for="movie">Favorite Movie
+          <label>
+            <select name="movie" id="movie" v-model="form.movie">
+              <option>Star Wars</option>
+              <option>Vanilla Sky</option>
+              <option>Atomic Blonde</option>
+            </select>
+      </p>
+
+      <p>
+        <input type="submit" value="Submit">
+      </p>
+
+    </form>
+
+  </div>
   <script src="../dist/validator.js"></script>
+  <script src="https://cdn.bootcss.com/vue/2.5.17-beta.0/vue.js"></script>
   <script>
-    const log = console.log.bind(console)
-    const validator = new Validator()
-    log(validator)
-
-    const schema = {
-      a: { required: true },
+    const validatorPlugin = {
+      install(Vue) {
+        const proto = Vue.prototype
+        const validator = new Validator()
+        proto.validator = validator
+        proto.validate = validator.validate.bind(validator)
+      }
     }
 
-    const data = {
-      b: 45
-    }
+    Vue.use(validatorPlugin)
 
-    const errors = validator.validate(data, schema)
-
-    log(errors)
-
+    const app = new Vue({
+      el: '#app',
+      data: {
+        form: {
+          name: null,
+          age: null,
+          movie: null,
+        },
+        rules: {
+          name: [
+            { required: true, message: '名称必填' }
+          ],
+          age: [
+            { required: true, message: '年龄必填' }
+          ]
+        },
+        errors: []
+      },
+      methods: {
+        checkForm: function (e) {
+          const validatedErrors = this.validate(this.form, this.rules)
+          if (validatedErrors) {
+            this.errors = validatedErrors.map(item => item.message)
+          } else {
+            return true
+          }
+          e.preventDefault();
+        }
+      }
+    })
   </script>
 </body>
 

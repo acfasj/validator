@@ -139,6 +139,14 @@ describe('instance validator', () => {
         assert(e.toString() === 'Error: 对应的规则不存在于RULE_MAP中')
       }
     })
+
+    it('should return equal results due to the same input in multiple validtations', () => {
+      const schema = { test: 'string' }
+      const data = { test: 233 }
+      const errors1 = validator.validate(data, schema)
+      const errors2 = validator.validate(data, schema)
+      assert.deepStrictEqual(errors1, errors2)
+    })
   })
 })
 
@@ -228,7 +236,7 @@ describe('class Validator', () => {
       Validator.addRule('myRule', (value, config, type) => {
         return value === 'MY_RULE'
       })
-      Validator.addMessage({ 'myRule': 'MY_MESSAGE' })
+      Validator.addMessage({ myRule: 'MY_MESSAGE' })
       const schema = { test: { myRule: true } }
       const data = { test: 0 }
       const errors = validator.validate(data, schema)
