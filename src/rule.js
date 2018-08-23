@@ -1,5 +1,10 @@
 import { createAddAPI } from './helper'
 
+/**
+ * 实际上, 最终要校验的值几乎都是 primitive 的, 绝大部分都是字符串
+ * 如果要校验 object 套 object 的, 有意义吗 ? 不懂写, 不写
+ */
+
 const types = {
   string(value) {
     return typeof value === 'string'
@@ -10,8 +15,23 @@ const types = {
    *
    * @param {String|Number} value
    */
+
   number(value) {
+    // Boolean([]) === 0
+    if (Array.isArray(value)) {
+      return false
+    }
     return !isNaN(Number(value))
+  },
+
+  /**
+   * 比如想发一个 id 数组到后端
+   *
+   * @param {Array} value
+   */
+
+  array(value) {
+    return Array.isArray(value)
   }
 }
 
@@ -32,17 +52,26 @@ const rules = {
   },
 
   min(value, config, type) {
-    if (type === 'string') {
-      return value.length > config
-    }
-
     if (type === 'number') {
-      return Number(value) > config
+      return Number(value) >= config
+    } else {
+      return value.length >= config
     }
   },
 
   max(value, config, type) {
-    return !this.min(value, config, type)
+    if (type === 'number') {
+      return Number(value) <= config
+    } else {
+      return value.length <= config
+    }
+  },
+
+  len(value, config, type) {
+    if (type === 'number') {
+      return String(value) === String(config)
+    }
+    return value.length === config
   },
 
   pattern(value, config, type) {
@@ -59,7 +88,4 @@ const addType = createAddAPI(types)
 const addRule = createAddAPI(rules)
 
 export default rules
-export {
-  addType,
-  addRule
-}
+export { addType, addRule }

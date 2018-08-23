@@ -44,61 +44,120 @@ describe('all rules', () => {
 
   describe('type', () => {
     describe('type string', () => {
-      it('type string should ok', () => {
+      it('should ok', () => {
         const schema = { test: { type: 'string' } }
         const data = { test: '' }
         const errors = validator.validate(data, schema)
         assert(errors === undefined)
       })
 
-      it('input number should error', () => {
+      it('should return error with a mismatch type array', () => {
         const schema = { test: { type: 'string' } }
-        const data = { test: 233 }
+        const data = { test: [] }
         const errors = validator.validate(data, schema)
-        assert(errors.length === 1)
-        assert(errors[0].key === 'test')
-        assert(errors[0].rule === 'type')
+        assert.deepStrictEqual(errors, [ { key: 'test', value: [], message: '必须是字符串', rule: 'type' } ])
+      })
+    })
+
+    describe('type number', () => {
+      it('should ok', () => {
+        const schema = { test: { type: 'number' } }
+        const data = { test: 0 }
+        const errors = validator.validate(data, schema)
+        assert(errors === undefined)
+      })
+
+      it('should return error with a mismatch type array', () => {
+        const schema = { test: { type: 'number' } }
+        const data = { test: [] }
+        const errors = validator.validate(data, schema)
+        assert.deepStrictEqual(errors, [ { key: 'test', value: [], message: '必须是数字', rule: 'type' } ])
+      })
+    })
+
+    describe('type array', () => {
+      it('should ok', () => {
+        const schema = { test: { type: 'array' } }
+        const data = { test: [] }
+        const errors = validator.validate(data, schema)
+        assert(errors === undefined)
+      })
+
+      it('should return error with a mismatch type number', () => {
+        const schema = { test: { type: 'array' } }
+        const data = { test: 0 }
+        const errors = validator.validate(data, schema)
+        assert.deepStrictEqual(errors, [ { key: 'test', value: 0, message: '必须是数组', rule: 'type' } ])
       })
     })
   })
 
   describe('min', () => {
-    it('should check string min error', () => {
+    it('should ok with type string', () => {
       const schema = { test: { type: 'string', min: 3 } }
-      const data = { test: '22' }
+      const data = { test: '333' }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].key === 'test')
-      assert(errors[0].rule === 'min')
+      assert(errors === undefined)
     })
 
-    it('should check number min error', () => {
+    it('should ok with type number', () => {
       const schema = { test: { type: 'number', min: 3 } }
-      const data = { test: 2 }
+      const data = { test: 3 }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].key === 'test')
-      assert(errors[0].rule === 'min')
+      assert(errors === undefined)
+    })
+
+    it('should ok with type array', () => {
+      const schema = { test: { type: 'array', min: 3 } }
+      const data = { test: [ 1, 2, 3 ] }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
     })
   })
 
   describe('max', () => {
-    it('should check string max error', () => {
-      const schema = { test: { type: 'string', max: 3 } }
-      const data = { test: '4444' }
+    it('should ok with type number', () => {
+      const schema = { test: { type: 'number', max: 3 } }
+      const data = { test: 3 }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].key === 'test')
-      assert(errors[0].rule === 'max')
+      assert(errors === undefined)
     })
 
-    it('should check number min error', () => {
-      const schema = { test: { type: 'number', max: 3 } }
-      const data = { test: 4 }
+    it('should ok with type string', () => {
+      const schema = { test: { type: 'string', max: 3 } }
+      const data = { test: '333' }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].key === 'test')
-      assert(errors[0].rule === 'max')
+      assert(errors === undefined)
+    })
+
+    it('should ok with type array', () => {
+      const schema = { test: { type: 'array', max: 3 } }
+      const data = { test: [ 1, 2, 3 ] }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+  })
+
+  describe('len', () => {
+    it('should equal to string\'s length with type string', () => {
+      const schema = { test: { type: 'string', len: 3 } }
+      const data = { test: '333' }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+
+    it('should equal to config with type number', () => {
+      const schema = { test: { type: 'number', len: 3 } }
+      const data = { test: 3 }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
+    })
+
+    it('should equal to array\'s length with type array', () => {
+      const schema = { test: { type: 'array', len: 3 } }
+      const data = { test: [ 1, 2, 3 ] }
+      const errors = validator.validate(data, schema)
+      assert(errors === undefined)
     })
   })
 

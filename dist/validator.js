@@ -41,6 +41,11 @@
     }
   }
 
+  /**
+   * 实际上, 最终要校验的值几乎都是 primitive 的, 绝大部分都是字符串
+   * 如果要校验 object 套 object 的, 有意义吗 ? 不懂写, 不写
+   */
+
   const types = {
     string(value) {
       return typeof value === 'string'
@@ -51,8 +56,23 @@
      *
      * @param {String|Number} value
      */
+
     number(value) {
+      // Boolean([]) === 0
+      if (Array.isArray(value)) {
+        return false
+      }
       return !isNaN(Number(value))
+    },
+
+    /**
+     * 比如想发一个 id 数组到后端
+     *
+     * @param {Array} value
+     */
+
+    array(value) {
+      return Array.isArray(value)
     }
   };
 
@@ -73,17 +93,26 @@
     },
 
     min(value, config, type) {
-      if (type === 'string') {
-        return value.length > config
-      }
-
       if (type === 'number') {
-        return Number(value) > config
+        return Number(value) >= config
+      } else {
+        return value.length >= config
       }
     },
 
     max(value, config, type) {
-      return !this.min(value, config, type)
+      if (type === 'number') {
+        return Number(value) <= config
+      } else {
+        return value.length <= config
+      }
+    },
+
+    len(value, config, type) {
+      if (type === 'number') {
+        return String(value) === String(config)
+      }
+      return value.length === config
     },
 
     pattern(value, config, type) {
@@ -102,7 +131,7 @@
   /**
    * rule 和 message 能否不因为 type 的缘故而再嵌套多一层 ?
    * 都是扁平化的结构, 一条 rule 就对应一条message不行吗 ?
-   * 当然可以, 只是这样必定要多出很多条 rulename , 代码写起来是方便了, 但使用不方便
+   * 当然可以, 只是这样必定要多出很多条 rulename , 代码写起来是方便了(测试也会更好写), 但使用不方便
    *
    * 比如, min 只用来比较 number 数值的大小
    * 如果要不再嵌套, 那么 min 就不能再用于限制 string 的最小长度, 要另起一个名字比如 minlength
@@ -112,7 +141,8 @@
     required: '必填',
     type: {
       string: '必须是字符串',
-      number: '必须是数字'
+      number: '必须是数字',
+      array: '必须是数组'
     },
     min: {
       string: config => `至少要${config}个字符`,
