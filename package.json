@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "rollup -c -w",
     "build": "rollup -c",
-    "test": "rollup -c && mocha -R spec -t 1000 test/*.test.js"
+    "test": "rollup -c && mocha --require intelli-espower-loader -R spec -t 1000 test/*.test.js"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
@@ -15,6 +15,7 @@
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.8.0",
     "eslint-plugin-standard": "^3.1.0",
+    "intelli-espower-loader": "^1.0.1",
     "mocha": "^5.2.0",
     "power-assert": "^1.6.0",
     "rollup": "^0.64.1"
