@@ -22,9 +22,7 @@ describe('all rules', () => {
       const schema = { test: { required: true } }
       const data = { test: '' }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].key === 'test')
-      assert(errors[0].rule === 'required')
+      assert.deepStrictEqual(errors, { test: { value: '', message: '必填', rule: 'required' } })
     })
 
     it('required === false should ok', () => {
@@ -55,7 +53,7 @@ describe('all rules', () => {
         const schema = { test: { type: 'string' } }
         const data = { test: [] }
         const errors = validator.validate(data, schema)
-        assert.deepStrictEqual(errors, [ { key: 'test', value: [], message: '必须是字符串', rule: 'type' } ])
+        assert.deepStrictEqual(errors, { test: { value: [], message: '必须是字符串', rule: 'type' } })
       })
     })
 
@@ -71,7 +69,7 @@ describe('all rules', () => {
         const schema = { test: { type: 'number' } }
         const data = { test: [] }
         const errors = validator.validate(data, schema)
-        assert.deepStrictEqual(errors, [ { key: 'test', value: [], message: '必须是数字', rule: 'type' } ])
+        assert.deepStrictEqual(errors, { test: { value: [], message: '必须是数字', rule: 'type' } })
       })
     })
 
@@ -87,7 +85,7 @@ describe('all rules', () => {
         const schema = { test: { type: 'array' } }
         const data = { test: 0 }
         const errors = validator.validate(data, schema)
-        assert.deepStrictEqual(errors, [ { key: 'test', value: 0, message: '必须是数组', rule: 'type' } ])
+        assert.deepStrictEqual(errors, { test: { value: 0, message: '必须是数组', rule: 'type' } })
       })
     })
   })
@@ -177,10 +175,7 @@ describe('all rules', () => {
       }
       const data = { test: 'value' }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].key === 'test')
-      assert(errors[0].rule === 'custom')
-      assert(errors[0].message === 'BLIND_TOM')
+      assert(errors, { test: { value: 'value', message: 'BLIND_TOM', rule: 'custom' } })
     })
   })
 })
@@ -287,8 +282,7 @@ describe('class Validator', () => {
       const schema = { test: { myRule: true } }
       const data = { test: 0 }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].message === 'MY_MESSAGE')
+      assert(errors, { test: { value: 0, message: 'MY_MESSAGE', rule: 'myRule' } })
     })
 
     it('should work with a new message via object notation', () => {
@@ -299,8 +293,7 @@ describe('class Validator', () => {
       const schema = { test: { myRule: true } }
       const data = { test: 0 }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].message === 'MY_MESSAGE')
+      assert(errors, { test: { value: 0, message: 'MY_MESSAGE', rule: 'myRule' } })
     })
 
     it('should override an exist message', () => {
@@ -308,8 +301,7 @@ describe('class Validator', () => {
       const schema = { test: { type: 'string' } }
       const data = { test: 0 }
       const errors = validator.validate(data, schema)
-      assert(errors.length === 1)
-      assert(errors[0].message === 'string type required')
+      assert(errors, { test: { value: 0, message: 'string type required', rule: 'type' } })
     })
   })
 })

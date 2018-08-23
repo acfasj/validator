@@ -208,7 +208,7 @@
   }
   */
 
-  function format(value) {
+  function formatRules(value) {
     if (Array.isArray(value)) {
       return value
     }
@@ -221,12 +221,22 @@
     return []
   }
 
+  function noop(value) {
+    return value
+  }
+
   class Validator {
+    constructor(opts = {}) {
+      this.formatError = opts.formatError || noop;
+      this.formatResult = opts.formatResult || noop;
+    }
+
     validate(data, schema) {
-      const errors = [];
+      let output = {};
+      const self = this;
 
       for (let key in schema) {
-        const rules$$1 = format(schema[key]);
+        const rules$$1 = formatRules(schema[key]);
         const value = data[key]
 
         // 一个字段对应的所有规则数组
@@ -251,8 +261,7 @@
                 // 遇到第一个错误就直接返回
                 const message =
                   defMessage || getMessage(rulename, rule.type, rule[rulename]);
-                errors.push({
-                  key,
+                output[key] = self.formatError({
                   value,
                   message,
                   rule: rulename
@@ -264,8 +273,8 @@
         })();
       }
 
-      if (errors.length) {
-        return errors
+      if (Object.keys(output).length) {
+        return self.formatResult(output)
       }
     }
   }

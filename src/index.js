@@ -34,7 +34,7 @@ const loginRule = {
 }
 */
 
-function format(value) {
+function formatRules(value) {
   if (Array.isArray(value)) {
     return value
   }
@@ -47,12 +47,22 @@ function format(value) {
   return []
 }
 
+function noop(value) {
+  return value
+}
+
 export default class Validator {
+  constructor(opts = {}) {
+    this.formatError = opts.formatError || noop
+    this.formatResult = opts.formatResult || noop
+  }
+
   validate(data, schema) {
-    const errors = []
+    let output = {}
+    const self = this
 
     for (let key in schema) {
-      const rules = format(schema[key])
+      const rules = formatRules(schema[key])
       const value = data[key]
 
       // 一个字段对应的所有规则数组
@@ -77,8 +87,7 @@ export default class Validator {
               // 遇到第一个错误就直接返回
               const message =
                 defMessage || getMessage(rulename, rule.type, rule[rulename])
-              errors.push({
-                key,
+              output[key] = self.formatError({
                 value,
                 message,
                 rule: rulename
@@ -90,8 +99,8 @@ export default class Validator {
       })()
     }
 
-    if (errors.length) {
-      return errors
+    if (Object.keys(output).length) {
+      return self.formatResult(output)
     }
   }
 }

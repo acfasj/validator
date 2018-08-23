@@ -17,38 +17,20 @@
 <body>
   <div id="app">
     <form @submit="checkForm" action="/something" method="post">
-
-      <p v-if="errors.length">
-        <b>Please correct the following error(s):</b>
-        <ul>
-          <li v-for="error in errors">{{ error }}</li>
-        </ul>
+      <p>
+        <label for="name">用户名<label>
+        <input type="text" name="name" id="name" v-model="form.name" placeholder="请输入用户名">
+        <p v-if="errors.name">{{ errors.name }}</p>
       </p>
 
       <p>
-        <label for="name">Name
-          <label>
-            <input type="text" name="name" id="name" v-model="form.name">
+        <label for="passwd">密码<label>
+        <input type="password" name="passwd" id="passwd" v-model="form.passwd" placeholder="请输入密码">
+        <p v-if="errors.passwd">{{ errors.passwd }}</p>
       </p>
 
       <p>
-        <label for="age">Age
-          <label>
-            <input type="number" name="age" id="age" v-model="form.age" min="0">
-      </p>
-
-      <p>
-        <label for="movie">Favorite Movie
-          <label>
-            <select name="movie" id="movie" v-model="form.movie">
-              <option>Star Wars</option>
-              <option>Vanilla Sky</option>
-              <option>Atomic Blonde</option>
-            </select>
-      </p>
-
-      <p>
-        <input type="submit" value="Submit">
+        <input type="submit" value="提交">
       </p>
 
     </form>
@@ -60,7 +42,12 @@
     const validatorPlugin = {
       install(Vue) {
         const proto = Vue.prototype
-        const validator = new Validator()
+        const validator = new Validator({
+          formatError: e => {
+            console.log(e)
+            return e.message
+          }
+        })
         proto.validator = validator
         proto.validate = validator.validate.bind(validator)
       }
@@ -73,24 +60,25 @@
       data: {
         form: {
           name: null,
-          age: null,
+          passwd: null,
           movie: null,
         },
         rules: {
           name: [
-            { required: true, message: '名称必填' }
+            { required: true, message: '用户名必填' },
           ],
-          age: [
-            { required: true, message: '年龄必填' }
+          passwd: [
+            { required: true,  message: '密码必填' },
+            { min: 6, max: 10, message: '长度要在6到10位' }
           ]
         },
-        errors: []
+        errors: {}
       },
       methods: {
         checkForm: function (e) {
-          const validatedErrors = this.validate(this.form, this.rules)
-          if (validatedErrors) {
-            this.errors = validatedErrors.map(item => item.message)
+          const errors = this.validate(this.form, this.rules)
+          if (errors) {
+            this.errors = errors
           } else {
             return true
           }
