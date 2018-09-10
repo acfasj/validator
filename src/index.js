@@ -24,7 +24,9 @@ const loginRule = {
 
 // 采用下面这种
 const loginRule = {
+  // 字段之间并行
   username: [
+    // item 之间串行, item 内并行
     { required: true, message: '邮箱必填' }
     { type: 'email', message: '邮箱格式不正确' }
   ],
@@ -57,50 +59,116 @@ export default class Validator {
     this.formatResult = opts.formatResult || noop
   }
 
-  validate(data, schema) {
-    let output = {}
-    const self = this
+  /**
+   * 默认返回一个 Promise
+   * https://eggjs.org/zh-cn/intro/egg-and-koa.html
+   *
+   * @param {Object} data
+   * @param {Object} schema
+   */
 
-    for (let key in schema) {
-      const rules = formatRules(schema[key])
-      const value = data[key]
+  async validate(data, schema) {
+    const output = {}
+    const entries = Object.entries(schema)
 
-      // 一个字段对应的所有规则数组
-      ;(function validateKey() {
-        for (let rule of rules) {
-          const defMessage = rule.message
+    const promises = entries.map(([key, rulesOfKey]) => {
+      rulesOfKey = formatRules(rulesOfKey)
+      return this._validateKey(key, data[key], rulesOfKey, output) // map 记住要返回一个 promise 啊
+    })
 
-          for (let rulename in rule) {
-            // 不能 delete rule.message, 多次验证
-            if (rulename === 'message') {
-              continue
-            }
-
-            let checker = RULE_MAP[rulename]
-            if (!checker) {
-              throw new Error('对应的规则不存在于RULE_MAP中')
-            }
-            checker = checker.bind(RULE_MAP)
-
-            const pass = checker(value, rule[rulename], rule.type)
-            if (!pass) {
-              // 遇到第一个错误就直接返回
-              const message =
-                defMessage || getMessage(rulename, rule.type, rule[rulename])
-              output[key] = self.formatError({
-                value,
-                message,
-                rule: rulename
-              })
-              return
-            }
-          }
-        }
-      })()
-    }
+    await Promise.all(promises)
 
     if (Object.keys(output).length) {
-      return self.formatResult(output)
+      return this.formatResult(output)
+    }
+  }
+
+  /**
+   * 对一个字段的所有规则进行验证
+   * 碰到第一条错误马上返回
+   *
+   * @param {String} key
+   * @param {String} value
+   * @param {Array<Object>} rulesOfKey
+   * @param {Object} output
+   */
+
+  async _validateKey(key, value, rulesOfKey, output) {
+    for (let rule of rulesOfKey) {
+      // 先把所有异步校验函数保存起来
+      const AsyncFns = []
+
+      for (let rulename in rule) {
+        // 不要删除 message 字段, 多次校验
+        if (rulename === 'message') {
+          continue
+        }
+
+        const isFunction = typeof rule[rulename] === 'function'
+        if (isFunction) {
+          AsyncFns.push({
+            rulename,
+            fn: rule[rulename]
+          })
+        } else {
+          const error = this._checkBuiltin({
+            rulename,
+            defMessage: rule.message,
+            value,
+            config: rule[rulename],
+            type: rule.type
+          })
+          if (error) {
+            output[key] = this.formatError(error)
+            return
+          }
+        }
+      }
+
+      const promises = AsyncFns.map(({ rulename, fn }) => {
+        const customPromise = fn(value, rulename)
+        if (typeof customPromise.then !== 'function') {
+          throw TypeError('自定义校验函数必须返回一个Promise')
+        }
+        return (
+          customPromise
+            // eslint-disable-next-line
+            .then(null, message => Promise.reject({ message, rulename }))
+        )
+      })
+
+      // 异步校验
+      await Promise.all(promises).catch(({ message, rulename }) => {
+        const validatedReslut = this.formatError({
+          value,
+          message,
+          rule: rulename
+        })
+        output[key] = validatedReslut
+      })
+    }
+  }
+
+  _checkBuiltin({ rulename, defMessage, value, config, type }) {
+    let checker = RULE_MAP[rulename]
+    let pass = false
+
+    if (!checker) {
+      throw new TypeError(
+        '基本规则名不正确, 不存在于内置的RULE_MAP中, 请检查是否拼写错误'
+      )
+    }
+    checker = checker.bind(this)
+    pass = checker(value, config, type)
+
+    if (!pass) {
+      const message = defMessage || getMessage(rulename, type, config)
+      const validatedReslut = {
+        value,
+        message,
+        rule: rulename
+      }
+      return validatedReslut
     }
   }
 }

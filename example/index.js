@@ -3,17 +3,20 @@ const Validator = require('../dist/validator')
 const validator = new Validator()
 
 const schema = {
-  a: 'number',
-  b: [
-    { type: 'string', message: '要是字符串' },
-    { min: 5, message: '最少5个字符' }
-  ]
+  test: {
+    someCheck: val => {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          reject('示例错误原因')
+        }, 10)
+      })
+    }
+  }
 }
 
-const data = {
-  b: 'val'
-}
+;(async () => {
+  const data = { test: 'value' }
+  const errors = await validator.validate(data, schema)
 
-const errors = validator.validate(data, schema)
-
-console.log(errors)
+  console.log(errors, '错误')
+})()

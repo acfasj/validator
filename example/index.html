@@ -69,7 +69,19 @@
           ],
           passwd: [
             { required: true,  message: '密码必填' },
-            { min: 6, max: 10, message: '长度要在6到10位' }
+            { min: 6, max: 10, message: '长度要在6到10位' },
+            {
+              custom(value) {
+                return new Promise((resolve, reject) => {
+                  setTimeout(() => {
+                    if (value === '123') {
+                      return resolve(true)
+                    }
+                    return reject('它的值必须是123')
+                  }, 100)
+                })
+              }
+            }
           ]
         },
         errors: {}

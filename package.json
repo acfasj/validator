@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "start": "npm run dev",
     "dev": "rollup -c -w",
     "build": "rollup -c",
     "test": "rollup -c && mocha --require intelli-espower-loader -R spec -t 1000 test/*.test.js"

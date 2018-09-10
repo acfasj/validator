@@ -77,10 +77,6 @@ const rules = {
   pattern(value, config, type) {
     const reg = new RegExp(config)
     return reg.test(value)
-  },
-
-  custom(value, config, type) {
-    return config(value)
   }
 }
 

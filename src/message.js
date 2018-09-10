@@ -24,8 +24,7 @@ const messages = {
     string: config => `不能超过${config}个字符`,
     number: config => `不能大于${config}`
   },
-  pattern: '正则匹配不通过',
-  custom: '未通过校验'
+  pattern: '正则匹配不通过'
 }
 
 function getMessage(rulename, type, ...config) {
