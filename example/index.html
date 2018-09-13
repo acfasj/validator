@@ -16,7 +16,7 @@
 
 <body>
   <div id="app">
-    <form @submit="checkForm" action="/something" method="post">
+    <form @submit="checkForm" method="POST">
       <p>
         <label for="name">用户名<label>
         <input type="text" name="name" id="name" v-model="form.name" placeholder="请输入用户名">
@@ -25,7 +25,7 @@
 
       <p>
         <label for="passwd">密码<label>
-        <input type="password" name="passwd" id="passwd" v-model="form.passwd" placeholder="请输入密码">
+        <input type="password" name="passwd" id="passwd" v-model="form.passwd" placeholder="请输入密码" autocomplete>
         <p v-if="errors.passwd">{{ errors.passwd }}</p>
       </p>
 
@@ -74,10 +74,10 @@
               custom(value) {
                 return new Promise((resolve, reject) => {
                   setTimeout(() => {
-                    if (value === '123') {
+                    if (value === '12345678') {
                       return resolve(true)
                     }
-                    return reject('它的值必须是123')
+                    return reject('它的值必须是12345678')
                   }, 100)
                 })
               }
@@ -87,14 +87,19 @@
         errors: {}
       },
       methods: {
-        checkForm: function (e) {
-          const errors = this.validate(this.form, this.rules)
+        async checkForm (e) {
+          // 在异步的情况下必须先调用e.preventDefault()
+          // 否则, 在 await 之后, 这个提交表单的事件已经发生完了( has completed ), 那时候再调用 e.preventDefault() 已经没用了
+          // 所以, 真正地提交表单的数据, 还是要自己去提交 :(
+          // https://stackoverflow.com/questions/37146302/event-preventdefault-in-async-functions
+          // https://cn.vuejs.org/v2/cookbook/form-validation.html
+          e.preventDefault()
+          const errors = await this.validate(this.form, this.rules)
           if (errors) {
-            this.errors = errors
-          } else {
-            return true
+            return this.errors = errors
           }
-          e.preventDefault();
+          // 在下面发请求提交表单...
+          console.log('校验通过')
         }
       }
     })
