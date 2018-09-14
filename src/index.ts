@@ -36,6 +36,29 @@ const loginRule = {
 }
 */
 
+interface formatErrorFunc {
+  (error: ValidatorResult): any
+}
+
+interface ValidatorOptions {
+  formatError?: formatErrorFunc
+  formatResult?: Function
+}
+
+interface checkBuiltinOptions {
+  rulename: string
+  defMessage: string
+  value: any
+  config: any
+  type: string
+}
+
+interface ValidatorResult {
+  value: string
+  rule: string
+  message: string
+}
+
 function formatRules(value) {
   if (Array.isArray(value)) {
     return value
@@ -54,7 +77,20 @@ function noop(value) {
 }
 
 export default class Validator {
-  constructor(opts = {}) {
+  /**
+   * 修改 rules(RULE_MAP) 对象
+   * 和 custom 这条规则又有什么区别呢?
+   * 如果有要多次重复使用的自定义规则, 用 addRule 和下面的api定义
+   * 否则直接使用 custom 就好了
+   */
+  static addRule = addRule
+  static addMessage = addMessage // 修改 messages 对象
+  static addType = addType // 修改 types 对象
+
+  formatError: formatErrorFunc
+  formatResult: Function
+
+  constructor(opts: ValidatorOptions = {}) {
     this.formatError = opts.formatError || noop
     this.formatResult = opts.formatResult || noop
   }
@@ -63,17 +99,16 @@ export default class Validator {
    * 默认返回一个 Promise
    * https://eggjs.org/zh-cn/intro/egg-and-koa.html
    *
-   * @param {Object} data
-   * @param {Object} schema
+   * @param data { key1: value1 .... }
+   * @param schema { key1: [ { rulename: config, message: 'define message' } ... ] ... }
    */
-
   async validate(data, schema) {
     const output = {}
     const entries = Object.entries(schema)
 
     const promises = entries.map(([key, rulesOfKey]) => {
-      rulesOfKey = formatRules(rulesOfKey)
-      return this._validateKey(key, data[key], rulesOfKey, output) // map 记住要返回一个 promise 啊
+      const rules = formatRules(rulesOfKey)
+      return this.validateKey(key, data[key], rules, output) // map 记住要返回一个 promise 啊
     })
 
     await Promise.all(promises)
@@ -87,13 +122,17 @@ export default class Validator {
    * 对一个字段的所有规则进行验证
    * 碰到第一条错误马上返回
    *
-   * @param {String} key
-   * @param {String} value
-   * @param {Array<Object>} rulesOfKey
-   * @param {Object} output
+   * @param key
+   * @param value
+   * @param rulesOfKey
+   * @param output
    */
-
-  async _validateKey(key, value, rulesOfKey, output) {
+  private async validateKey(
+    key: string,
+    value: any,
+    rulesOfKey: any[],
+    output: any
+  ) {
     for (let rule of rulesOfKey) {
       // 先把所有异步校验函数保存起来
       const AsyncFns = []
@@ -111,7 +150,7 @@ export default class Validator {
             fn: rule[rulename]
           })
         } else {
-          const error = this._checkBuiltin({
+          const error = this.checkBuiltin({
             rulename,
             defMessage: rule.message,
             value,
@@ -130,10 +169,8 @@ export default class Validator {
         if (typeof customPromise.then !== 'function') {
           throw TypeError('自定义校验函数必须返回一个Promise')
         }
-        return (
-          customPromise
-            // eslint-disable-next-line
-            .then(null, message => Promise.reject({ message, rulename }))
+        return customPromise.then(null, message =>
+          Promise.reject({ message, rulename })
         )
       })
 
@@ -149,7 +186,13 @@ export default class Validator {
     }
   }
 
-  _checkBuiltin({ rulename, defMessage, value, config, type }) {
+  private checkBuiltin({
+    rulename,
+    defMessage,
+    value,
+    config,
+    type
+  }: checkBuiltinOptions) {
     let checker = RULE_MAP[rulename]
     let pass = false
 
@@ -163,7 +206,7 @@ export default class Validator {
 
     if (!pass) {
       const message = defMessage || getMessage(rulename, type, config)
-      const validatedReslut = {
+      const validatedReslut: ValidatorResult = {
         value,
         message,
         rule: rulename
@@ -172,24 +215,3 @@ export default class Validator {
     }
   }
 }
-
-/**
- * 修改 rules(RULE_MAP) 对象
- * 和 custom 这条规则又有什么区别呢?
- * 如果有要多次重复使用的自定义规则, 用 addRule 和下面的api定义
- * 否则直接使用 custom 就好了
- */
-
-Validator.addRule = addRule
-
-/**
- * 修改 messages 对象
- */
-
-Validator.addMessage = addMessage
-
-/**
- * 修改 types 对象
- */
-
-Validator.addType = addType
