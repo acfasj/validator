@@ -36,16 +36,15 @@ const loginRule = {
 }
 */
 
-interface formatErrorFunc {
-  (error: ValidatorResult): any
+type IFomatFunc = (value: any) => any
+type IFormatErrorFunc = (error: IValidatorResult) => any
+
+interface IValidatorOptions {
+  formatError?: IFormatErrorFunc
+  formatResult?: IFomatFunc
 }
 
-interface ValidatorOptions {
-  formatError?: formatErrorFunc
-  formatResult?: Function
-}
-
-interface checkBuiltinOptions {
+interface ICheckBuiltinOptions {
   rulename: string
   defMessage: string
   value: any
@@ -53,7 +52,7 @@ interface checkBuiltinOptions {
   type: string
 }
 
-interface ValidatorResult {
+interface IValidatorResult {
   value: string
   rule: string
   message: string
@@ -83,14 +82,14 @@ export default class Validator {
    * 如果有要多次重复使用的自定义规则, 用 addRule 和下面的api定义
    * 否则直接使用 custom 就好了
    */
-  static addRule = addRule
-  static addMessage = addMessage // 修改 messages 对象
-  static addType = addType // 修改 types 对象
+  public static addRule = addRule
+  public static addMessage = addMessage // 修改 messages 对象
+  public static addType = addType // 修改 types 对象
 
-  formatError: formatErrorFunc
-  formatResult: Function
+  public formatError: IFormatErrorFunc
+  public formatResult: IFomatFunc
 
-  constructor(opts: ValidatorOptions = {}) {
+  constructor(opts: IValidatorOptions = {}) {
     this.formatError = opts.formatError || noop
     this.formatResult = opts.formatResult || noop
   }
@@ -102,7 +101,7 @@ export default class Validator {
    * @param data { key1: value1 .... }
    * @param schema { key1: [ { rulename: config, message: 'define message' } ... ] ... }
    */
-  async validate(data, schema) {
+  public async validate(data, schema) {
     const output = {}
     const entries = Object.entries(schema)
 
@@ -133,11 +132,11 @@ export default class Validator {
     rulesOfKey: any[],
     output: any
   ) {
-    for (let rule of rulesOfKey) {
+    for (const rule of rulesOfKey) {
       // 先把所有异步校验函数保存起来
       const AsyncFns = []
 
-      for (let rulename in rule) {
+      for (const rulename in rule) {
         // 不要删除 message 字段, 多次校验
         if (rulename === 'message') {
           continue
@@ -147,7 +146,7 @@ export default class Validator {
         if (isFunction) {
           AsyncFns.push({
             rulename,
-            fn: rule[rulename]
+            fn: rule[rulename],
           })
         } else {
           const error = this.checkBuiltin({
@@ -155,7 +154,7 @@ export default class Validator {
             defMessage: rule.message,
             value,
             config: rule[rulename],
-            type: rule.type
+            type: rule.type,
           })
           if (error) {
             output[key] = this.formatError(error)
@@ -179,7 +178,7 @@ export default class Validator {
         const validatedReslut = this.formatError({
           value,
           message,
-          rule: rulename
+          rule: rulename,
         })
         output[key] = validatedReslut
       })
@@ -191,8 +190,8 @@ export default class Validator {
     defMessage,
     value,
     config,
-    type
-  }: checkBuiltinOptions) {
+    type,
+  }: ICheckBuiltinOptions) {
     let checker = RULE_MAP[rulename]
     let pass = false
 
@@ -206,10 +205,10 @@ export default class Validator {
 
     if (!pass) {
       const message = defMessage || getMessage(rulename, type, config)
-      const validatedReslut: ValidatorResult = {
+      const validatedReslut: IValidatorResult = {
         value,
         message,
-        rule: rulename
+        rule: rulename,
       }
       return validatedReslut
     }

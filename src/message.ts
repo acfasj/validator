@@ -14,20 +14,20 @@ const messages = {
   type: {
     string: '必须是字符串',
     number: '必须是数字',
-    array: '必须是数组'
+    array: '必须是数组',
   },
   min: {
     string: config => `至少要${config}个字符`,
-    number: config => `至少要大于${config}`
+    number: config => `至少要大于${config}`,
   },
   max: {
     string: config => `不能超过${config}个字符`,
-    number: config => `不能大于${config}`
+    number: config => `不能大于${config}`,
   },
-  pattern: '正则匹配不通过'
+  pattern: '正则匹配不通过',
 }
 
-function getMessage(rulename, type, ...config) {
+function getMessage(rulename, type, ...config): string {
   const target = messages[rulename]
   if (typeof target === 'string') {
     return target
@@ -46,7 +46,4 @@ function getMessage(rulename, type, ...config) {
 
 const addMessage = createAddAPI(messages)
 
-export {
-  getMessage,
-  addMessage
-}
+export { getMessage, addMessage }

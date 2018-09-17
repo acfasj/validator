@@ -6,7 +6,7 @@
  * @param source
  */
 function merge(target, source) {
-  for (let key in source) {
+  for (const key in source) {
     if (!target[key] || typeof target[key] !== 'object') {
       target[key] = source[key]
     } else {
@@ -21,17 +21,15 @@ function merge(target, source) {
  *
  * @param baseObj
  */
-function createAddAPI(baseObj): Function {
+function createAddAPI(baseObj): () => void {
   return function add(...args) {
     if (typeof args[0] === 'string') {
       args[0] = {
-        [args[0]]: args[1]
+        [args[0]]: args[1],
       }
     }
     merge(baseObj, args[0])
   }
 }
 
-export {
-  createAddAPI
-}
+export { createAddAPI }
